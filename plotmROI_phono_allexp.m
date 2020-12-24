@@ -43,21 +43,26 @@ function [h,hE,hl] = plotmROI_phono_allexp(T,effects,whichROIs,ROIstring,whicher
     end
     %% calc
      addpath('/Users/tamaregev/Dropbox/MATLAB/lab/myFunctions/mine')
-
-        
-    allEffects = [effects{1},effects{2},effects{3}];
+     
+    clear allEffects
+    allEffects = cell(0,0);
+    for ii=1:length(effects)
+        allEffects = [allEffects,effects{ii}];
+    end
     whichExpPerEffect = nan(size(allEffects));
    
-    colors = [255 255 255; 6 12 186; 57 67 203; 108 121 221; 158 176 238; 209 230 255; 247 37 133;251 157 199]./255;
+    colors = [255 255 255; 150 150 150; 100 100 100; 6 12 186; 57 67 203; 108 121 221; 158 176 238; 209 230 255; 247 37 133;251 157 199]./255;
+    
+    nexp = numel(effects);
 
-    EffectSize = cell(3,1);
+    EffectSize = cell(nexp,1);
     meanE_all = nan(numel(allEffects),numel(whichROIs));
     err_all = nan(numel(allEffects),numel(whichROIs));
     meanE_allfROIs = nan(numel(allEffects),1);
     err_allfROIs = nan(numel(allEffects),1);
     
     ieffect = 1;
-    for iexp=1:3
+    for iexp=1:nexp
         plotT = T(ismember(T.ROI,whichROIs) & ismember(T.Effect,allEffects) & T.ExpNum==iexp ,:); 
         allSubj = unique(plotT.UID);
         nSubj=numel(allSubj);
@@ -102,7 +107,7 @@ function [h,hE,hl] = plotmROI_phono_allexp(T,effects,whichROIs,ROIstring,whicher
     
     %% plot
     if avgfROIs
-        for iexp=1:3
+        for iexp=1:nexp
             EffectSize{iexp} = mean(EffectSize{iexp},3);
         end   
         Plot(meanE_allfROIs,err_allfROIs,EffectSize)
@@ -123,15 +128,27 @@ function [h,hE,hl] = plotmROI_phono_allexp(T,effects,whichROIs,ROIstring,whicher
     %     mROIsig=table(whichROIs,p,H,CI,stats);
    
         %insert nans to create spaces between the 3 experiments:
-        meanE_all_wnan = nan(10,size(means,2));
-        err_all_wnan = nan(10,size(means,2));
-        meanE_all_wnan(1:numel(effects{1}),:) = means(1:numel(effects{1}),:);
-        meanE_all_wnan(numel(effects{1})+2:numel(effects{1})+1+numel(effects{2}),:) = means(numel(effects{1})+1:numel(effects{1})+numel(effects{2}),:);
-        meanE_all_wnan(numel(effects{1})+3+numel(effects{2}):numel(effects{1})+2+numel(effects{2})+numel(effects{3}),:) = means(numel(effects{1})+1+numel(effects{2}):numel(effects{1})+numel(effects{2})+numel(effects{3}),:);
+        nSpaces = nexp-1;%add due to number of experiments
+        meanE_all_wnan = nan(size(means,1)+nSpaces,size(means,2));
+        err_all_wnan = nan(size(means,1)+nSpaces,size(means,2));
+        for ie=1:nexp
+            indfrom_wn = 1;
+            indto_wn = numel(effects{1});
+            indfrom = 1;
+            indto = numel(effects{1});
+            if ie>1
+                for i=2:ie
+                    indfrom_wn = indfrom_wn + numel(effects{i-1}) + 1;
+                    indto_wn = indto_wn + numel(effects{i}) + 1;
+                    
+                    indfrom = indfrom + numel(effects{i-1});
+                    indto = indto + numel(effects{i});
 
-        err_all_wnan(1:numel(effects{1}),:) = errs(1:numel(effects{1}),:);
-        err_all_wnan(numel(effects{1})+2:numel(effects{1})+1+numel(effects{2}),:) = errs(numel(effects{1})+1:numel(effects{1})+numel(effects{2}),:);
-        err_all_wnan(numel(effects{1})+3+numel(effects{2}):numel(effects{1})+2+numel(effects{2})+numel(effects{3}),:) = errs(numel(effects{1})+1+numel(effects{2}):numel(effects{1})+numel(effects{2})+numel(effects{3}),:);
+                end
+            end
+            meanE_all_wnan(indfrom_wn:indto_wn,:) = means(indfrom:indto,:);
+            err_all_wnan(indfrom_wn:indto_wn,:) = errs(indfrom:indto,:);
+        end
 
         ibMap=find(~isnan(meanE_all_wnan(:,1)));
 
@@ -140,12 +157,12 @@ function [h,hE,hl] = plotmROI_phono_allexp(T,effects,whichROIs,ROIstring,whicher
             for ib=1:length(h)
                 if find(ibMap==ib)
                     h(ib).FaceColor=colors(find(ibMap==ib),:);
-                    h(ib).LineWidth=2;
+                    h(ib).LineWidth=1;
                 else
                     h(ib).HandleVisibility = 'off';
                 end
             end
-            set(hE,'Linewidth',2)
+            set(hE,'Linewidth',1)
             set(gca,'xtick',1:length(whichROIs))
             xticklabels(gca,ROIstring(whichROIs))
             xlabel('ROI')
@@ -159,8 +176,8 @@ function [h,hE,hl] = plotmROI_phono_allexp(T,effects,whichROIs,ROIstring,whicher
                     hE(ib) = errorbar(ib,meanE_all_wnan(ib),err_all_wnan(ib));
                     set(hE(ib),'Color','k','HandleVisibility','off')
                     if avgfROIs
-                        h(ib).LineWidth=2;
-                        set(hE(ib),'linewidth',2)
+                        h(ib).LineWidth=1;
+                        set(hE(ib),'linewidth',1)
                     else
                         h(ib).LineWidth=1;
                         set(hE(ib),'linewidth',1)
@@ -168,9 +185,9 @@ function [h,hE,hl] = plotmROI_phono_allexp(T,effects,whichROIs,ROIstring,whicher
                    
                 end
             end
-            set(gca,'xtick',[1 5 9.5])
-            ExpString = {'Exp 1','Exp 2','Exp 3'};
-            Nstring = {'N=605','N=16','N=14'};
+            set(gca,'xtick',[1 3 5 9 13.5])
+            ExpString = {'Exp 1a','Exp 1b','Exp 1c','Exp 2','Exp 3'};
+            Nstring = {'N=605','N=12','N=13','N=16','N=14'};
             labelArray = [ExpString;Nstring];
             tickLabels = strtrim(sprintf('%s\\newline%s\n', labelArray{:}));
             set(gca,'xticklabels',tickLabels)
@@ -189,13 +206,13 @@ function [h,hE,hl] = plotmROI_phono_allexp(T,effects,whichROIs,ROIstring,whicher
             if size(means,2)>1 %plot several fROIs
                 circleSize = [20 30];
                 spreadScale = [30 30];
-                alphaLevel = [0.03 0.4];
+                alphaLevel = [0.02 0.2];
             elseif avgfROIs
                 circleSize = [50 70];
                 spreadScale = [3 5];    
-                alphaLevel = [0.03 0.4];
+                alphaLevel = [0.02 0.2];
             else %plot 1 fROI
-                circleSize = [20 30];
+                circleSize = [7 14];
                 spreadScale = [2 3];
                 alphaLevel = [0.02 0.2];
             end
@@ -205,14 +222,22 @@ function [h,hE,hl] = plotmROI_phono_allexp(T,effects,whichROIs,ROIstring,whicher
                     XData = h(ib).XData+h(ib).XOffset;
                     YData = h(ib).YData;
                     iexp = whichExpPerEffect(iib);
-                    switch iexp
-                        case 1
-                            ibPerExp = iib;
-                        case 2 
-                            ibPerExp = iib - numel(effects{1});
-                        case 3
-                            ibPerExp = iib - numel(effects{1}) - numel(effects{2});
+                    ibPerExp = iib;
+                    if iexp>1
+                        for i=2:iexp
+                            ibPerExp = ibPerExp - numel(effects{i-1});
+                        end
                     end
+%                     
+%                     switch iexp
+%                         case 1
+%                             ibPerExp = iib;
+%                         case 2 
+%                             ibPerExp = iib - numel(effects{1});
+%                         case 3
+%                             ibPerExp = iib - numel(effects{1}) - numel(effects{2});
+%                     end
+                    
                     for iroi=1:numel(XData)
 
                         ind = squeeze(subjData{iexp}(ibPerExp,:,iroi));
@@ -223,21 +248,27 @@ function [h,hE,hl] = plotmROI_phono_allexp(T,effects,whichROIs,ROIstring,whicher
                             case 1
                                 hs=scatter((xx+(rand(size(xx))-0.5)/spreadScale(1)),ind,circleSize(1),'k','filled','HandleVisibility','off');
                                 hs.MarkerFaceAlpha=alphaLevel(1);
-                            case 2   
+                            otherwise  
         %                        hs=scatter((xx+(rand(size(xx))-0.5)/100),ind,25,colors(ib,:).*0.8,'filled','MarkerEdgeColor',colors(ib,:).*0.5,'HandleVisibility','off');
                                 hs=scatter((xx+(rand(size(xx))-0.5)/spreadScale(2)),ind,circleSize(2),colors(iib,:).*0.8,'filled','HandleVisibility','off');
                                 hs.MarkerFaceAlpha=alphaLevel(2);
-                            case 3
-                                hs=scatter((xx+(rand(size(xx))-0.5)/spreadScale(2)),ind,circleSize(2),colors(iib,:).*0.8,'filled','HandleVisibility','off');
-                                hs.MarkerFaceAlpha=alphaLevel(2);
+                                %hs=scatter((xx+(rand(size(xx))-0.5)/spreadScale(2)),ind,circleSize(2),colors(iib,:).*0.8,'filled','HandleVisibility','off');
+                                %hs.MarkerFaceAlpha=alphaLevel(2);
                         end
     %                hE2=errorbar(XData(iroi),YData(iroi),stderr(ib,iroi),'Color','k');
     %                set(hE2,'linewidth',2)
                     end
                 end
             end
-            minind = min([min(min(min(subjData{1}))) min(min(min(subjData{2}))) min(min(min(subjData{3})))]);
-            maxind = max([max(max(max(subjData{1}))) max(max(max(subjData{2}))) max(max(max(subjData{3})))]);
+            allmins = nan(size(effects));
+            for ie = 1:numel(effects)
+                allmins(ie) = min(min(min(subjData{ie})));
+                allmaxs(ie) = max(max(max(subjData{ie})));
+            end
+            %minind = min([min(min(min(subjData{1}))) min(min(min(subjData{2}))) min(min(min(subjData{3})))]);
+            minind = min(allmins);
+%            maxind = max([max(max(max(subjData{1}))) max(max(max(subjData{2}))) max(max(max(subjData{3})))]);
+            maxind = max(allmaxs);
 
             ylim([minind, maxind])
             %ylim([-2, 4])

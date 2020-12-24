@@ -39,6 +39,10 @@ function [hf,hl] = plotmROI_phono(T,expName,effects,whichROIs,displayStats,displ
     switch expName
         case 'langlocSN'
             colors = [0 0.4470 0.7410; 0.8500 0.3250 0.0980];
+        case 'SWJNaud'
+            colors = [0 0.1470 0.7410; 0.1235 0.4745 0.8667; 0.6196 0.6902 0.9333; 0.8500 0.3250 0.0980];
+        case 'Biling'
+            colors = [1 0.3 0.1; 0.8500 0.3250 0.0980];
         case 'ParamNew'
             order = 10:-1:1;%reorder conditions from S-S1-4, W, W1-4
             EffectSize = EffectSize(order,:,:);
@@ -88,6 +92,11 @@ function [hf,hl] = plotmROI_phono(T,expName,effects,whichROIs,displayStats,displ
                         ind = squeeze(EffectSize(ib,:,iroi));
                     case 'langlocSN'
                         ind = squeeze(EffectSize(ib,:,iroi));
+                    case 'SWJNaud'
+                        ind = squeeze(EffectSize(ib,:,iroi));
+                     case 'Biling'
+                        ind = squeeze(EffectSize(ib,:,iroi));
+                   
                 end
                 xx=repmat(XData(iroi),size(ind));
    %             hs=plot((xx+(rand(size(xx))-0.5)/10),ind,'o','MarkerFaceColor',colors(ib,:),'MarkerEdgeColor',colors(ib,:).*0.5,'MarkerSize',6,'Linewidth',0.1,'HandleVisibility','off');
@@ -95,6 +104,9 @@ function [hf,hl] = plotmROI_phono(T,expName,effects,whichROIs,displayStats,displ
                     case 'langlocSN'
                         hs=scatter((xx+(rand(size(xx))-0.5)/10),ind,30,colors(ib,:).*0.8,'filled','HandleVisibility','off');
                         hs.MarkerFaceAlpha=0.1;
+                    case 'SWJNaud'
+                        hs=scatter((xx+(rand(size(xx))-0.5)/100),ind,25,colors(ib,:).*0.8,'filled','HandleVisibility','off');
+                        hs.MarkerFaceAlpha=0.2;
                     case 'ParamNew'    
 %                        hs=scatter((xx+(rand(size(xx))-0.5)/100),ind,25,colors(ib,:).*0.8,'filled','MarkerEdgeColor',colors(ib,:).*0.5,'HandleVisibility','off');
                         hs=scatter((xx+(rand(size(xx))-0.5)/100),ind,25,colors(ib,:).*0.8,'filled','HandleVisibility','off');
@@ -102,6 +114,10 @@ function [hf,hl] = plotmROI_phono(T,expName,effects,whichROIs,displayStats,displ
                     case 'Nhood'
                         hs=scatter((xx+(rand(size(xx))-0.5)/10),ind,30,colors(ib,:).*0.8,'filled','HandleVisibility','off');
                         hs.MarkerFaceAlpha=0.2;
+                    case 'Biling'
+                        hs=scatter((xx+(rand(size(xx))-0.5)/10),ind,30,colors(ib,:).*0.8,'filled','HandleVisibility','off');
+                        hs.MarkerFaceAlpha=0.2;
+               
                 end
                 hE2=errorbar(XData(iroi),YData(iroi),stderr(ib,iroi),'Color','k');
                 set(hE2,'linewidth',2)
