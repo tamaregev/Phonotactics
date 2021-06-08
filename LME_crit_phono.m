@@ -7,7 +7,6 @@ expNs = {'Exp1a','Exp1b','Exp1c','Exp2','Exp3'};
 addpath('/Users/tamaregev/Dropbox/MATLAB/lab/myFunctions/mine')
 ROIstring = {'IFGorb','IFG','MFG','AntTemp','PostTemp','AngG','IFGorb-R','IFG-R','MFG-R','AntTemp-R','PostTemp-R','AngG-R'};
 conditions = { 'N langloc','N aud','ENGNW',{'W','W1','W2','W3','W4'},{'high','low'}};
-  
 addpath('/Users/tamaregev/Dropbox/MATLAB/functions/myFunctions/')
 %% Make and save table of all 5 Exp together
 clear T
@@ -62,10 +61,10 @@ Tb = [T{1}; T{2}; T{3}; T{4}; T{5}];
 save([results_dir 'Tb'],'Tb')
 
 %% critical experiments
-%%  each fROI
+%% each fROI
 Tr = cell(length(expNames),5);%exp, roi
 
-Tres=table;%a table that aggregates all results
+Tres=table;% a table that aggregates all results
 for iexp=1:length(expNames)
     expName = expNames{iexp};
     disp(expName)
@@ -86,12 +85,11 @@ for iexp=1:length(expNames)
             
             P(iroi) = lme.Coefficients.pValue;
             Es(iroi) = lme.Coefficients.Estimate;
-            %anova(lme)
-            %[H,P,CI,STATS] = ttest(Tecr.EffectSize);
-            %disp(['t=(' num2str(STATS.df) ')' num2str(STATS.tstat) ', p=' num2str(P)])
+            
         end
         
         [P_FDR, H] = FDR(P,0.05);
+        
         for iroi = 1:5
             disp([iroi ROIstring{iroi}])
             disp(['Estimate=' num2str(Es(iroi)) ', P=' num2str(P(iroi)) ', P_FDR=' num2str(P_FDR(iroi)) ' H=' num2str(H(iroi))])
@@ -117,11 +115,11 @@ for iexp=1:length(expNames)
         if iexp==4
            EffectName = Tec.Effect;
            Effect = zeros(size(EffectName));
-           Effect(strcmp(EffectName,'W')) = -2;
-           Effect(strcmp(EffectName,'W1')) = -1;
+           Effect(strcmp(EffectName,'W')) = 2;
+           Effect(strcmp(EffectName,'W1')) = 1;
            Effect(strcmp(EffectName,'W2')) = 0;
-           Effect(strcmp(EffectName,'W3')) = 1;
-           Effect(strcmp(EffectName,'W4')) = 2;
+           Effect(strcmp(EffectName,'W3')) = -1;
+           Effect(strcmp(EffectName,'W4')) = -2;
            Tec.Effect = Effect;
         elseif iexp==5
            EffectName = Tec.Effect;
@@ -130,25 +128,31 @@ for iexp=1:length(expNames)
            Effect(strcmp(EffectName,'high')) = 0.5;
            Tec.Effect = Effect;
         end
-        formula = 'EffectSize ~ Effect + (1|UID)';
+        formula = 'EffectSize ~ Effect + (Effect|UID)';
         for iroi = 1:5
             %disp([iroi ROIstring{iroi}])
             Tecr = Tec(ismember(Tec.ROI,categorical(iroi)),:);
             lme = fitlme(Tecr,formula);
             Tr{iexp,iroi} = lme2table(lme);
 
-            P(iroi) = lme.anova.pValue(2);
+            P_INT(iroi) = lme.anova.pValue(1);
+            
+            P_SLOPE(iroi) = lme.anova.pValue(2);
             %anova(lme)
         end
-        [P_FDR, H] = FDR(P,0.05);
+        [P_INT_FDR, H_INT] = FDR(P_INT,0.05);
+        [P_SLOPE_FDR, H_SLOPE] = FDR(P_SLOPE,0.05);
+
         for iroi = 1:5
             disp([iroi ROIstring{iroi}])
-            disp(['P=' num2str(P(iroi)) ', P_FDR=' num2str(P_FDR(iroi)) ' H=' num2str(H(iroi))])
+            disp(['P_INT=' num2str(P_INT(iroi)) ', P_INT_FDR=' num2str(P_INT_FDR(iroi)) ' H=' num2str(H_INT(iroi))])
+            disp(['P_SLOPE=' num2str(P_INT(iroi)) ', P_SLOPE_FDR=' num2str(P_SLOPE_FDR(iroi)) ' H=' num2str(H_SLOPE(iroi))])
+
             %save all results to a table
             Experiment = repmat(expNames(iexp),[size(Tr{iexp,iroi},1),1]);
             ROI = repmat(ROIstring(iroi),[size(Tr{iexp,iroi},1),1]);
-            p_FDR = nan(size(Tr{iexp,iroi},1),1);p_FDR(2) = P_FDR(iroi);
-            H_FDR = nan(size(Tr{iexp,iroi},1),1);H_FDR(2) = H(iroi);
+            p_FDR = nan(size(Tr{iexp,iroi},1),1);p_FDR(1) = P_INT_FDR(iroi);p_FDR(2) = P_SLOPE_FDR(iroi);
+            H_FDR = nan(size(Tr{iexp,iroi},1),1);H_FDR(1) = H_INT(iroi);H_FDR(2) = H_SLOPE(iroi);
             clear Tre
             Tre = [table(Experiment),table(ROI),Tr{iexp,iroi}(:,1:6),table(p_FDR),table(H_FDR),Tr{iexp,iroi}(:,7:end)];
             Tre.Properties.VariableNames{3} = 'FixedEffectName';
@@ -203,11 +207,16 @@ for iexp=1:length(expNames)
         if iexp==4
            EffectName = Tec.Effect;
            Effect = zeros(size(EffectName));
-           Effect(strcmp(EffectName,'W')) = -2;
-           Effect(strcmp(EffectName,'W1')) = -1;
+%            Effect(strcmp(EffectName,'W')) = -2;
+%            Effect(strcmp(EffectName,'W1')) = -1;
+%            Effect(strcmp(EffectName,'W2')) = 0;
+%            Effect(strcmp(EffectName,'W3')) = 1;
+%            Effect(strcmp(EffectName,'W4')) = 2;
+           Effect(strcmp(EffectName,'W')) = 2;
+           Effect(strcmp(EffectName,'W1')) = 1;
            Effect(strcmp(EffectName,'W2')) = 0;
-           Effect(strcmp(EffectName,'W3')) = 1;
-           Effect(strcmp(EffectName,'W4')) = 2;
+           Effect(strcmp(EffectName,'W3')) = -1;
+           Effect(strcmp(EffectName,'W4')) = -2;
            Tec.Effect = Effect;
         elseif iexp==5
            EffectName = Tec.Effect;
@@ -216,17 +225,22 @@ for iexp=1:length(expNames)
            Effect(strcmp(EffectName,'high')) = 0.5;
            Tec.Effect = Effect;
         end
-        formula = 'EffectSize ~ Effect + (1|UID) + (1|ROI)';
-        lme = fitlme(Tec,formula);
+        Tecr = Tec(ismember(Tec.ROI,categorical([1:5])),:);
+        formula = 'EffectSize ~ Effect + (Effect|UID) + (Effect|ROI)';
+        lme = fitlme(Tecr,formula);
         Tr{iexp} = lme2table(lme);
 
         anova(lme);
-        P = lme.anova.pValue(2);
+        P_INT = lme.anova.pValue(1);
+        P_SLOPE = lme.anova.pValue(2);
+        
         %es = lme.Coefficients.Estimate;
-        disp(['P=' num2str(P) ' H=' num2str(P<0.05)])
+        disp(['P_INT=' num2str(P_INT) ' H_INT=' num2str(P_INT<0.05)])
+        disp(['P_SLOPE=' num2str(P_SLOPE) ' H_SLOPE=' num2str(P_SLOPE<0.05)])
+       
         %save all results to a table
             Experiment = repmat(expNames(iexp),[size(Tr{iexp},1),1]);
-            H = nan(size(Tr{iexp},1),1);H(2) = P<0.05;
+            H = nan(size(Tr{iexp},1),1);H(1) = P_INT<0.05;H(2) = P_SLOPE<0.05;
             clear Tre
             Tre = [table(Experiment),Tr{iexp}(:,1:6),table(H),Tr{iexp}(:,7:end)];
             Tre.Properties.VariableNames{2} = 'FixedEffectName';

@@ -58,25 +58,30 @@ for iexp=1:length(expNames)
        Effect(strcmp(EffectName,'S')) = 0.5;
        Effect(strcmp(EffectName,'N')) = -0.5;
        Tec.Effect = Effect;
-    formula = 'EffectSize ~ Effect + (1|UID)';
+    formula = 'EffectSize ~ Effect + (Effect|UID)';
     for iroi = 1:5
         %disp([iroi ROIstring{iroi}])
         Tecr = Tec(ismember(Tec.ROI,categorical(iroi)),:);
         lme = fitlme(Tecr,formula);
         Tr{iexp,iroi} = lme2table(lme);
-
-        P(iroi) = lme.anova.pValue(2);
+        
+        P_int(iroi) = lme.anova.pValue(1);
+        P_slope(iroi) = lme.anova.pValue(2);
         %anova(lme)
     end
-    [P_FDR, H] = FDR(P,0.05);
+    [P_INT_FDR, H_INT] = FDR(P_int,0.05);
+    [P_SLOPE_FDR, H_SLOPE] = FDR(P_slope,0.05);
+
     for iroi = 1:5
         disp([iroi ROIstring{iroi}])
-        disp(['P=' num2str(P(iroi)) ', P_FDR=' num2str(P_FDR(iroi)) ' H=' num2str(H(iroi))])
+        disp(['Int=' num2str(Tr{iexp,iroi}.Estimate(1)) ' P=' num2str(P(iroi),3) ', P_FDR=' num2str(P_FDR(iroi),3) ' H=' num2str(H(iroi))])
+        disp(['Slope=' num2str(Tr{iexp,iroi}.Estimate(2)) ' P=' num2str(P(iroi)) ', P_FDR=' num2str(P_FDR(iroi)) ' H=' num2str(H(iroi))])
+
         %save all results to a table
         Experiment = repmat(expNames(iexp),[size(Tr{iexp,iroi},1),1]);
         ROI = repmat(ROIstring(iroi),[size(Tr{iexp,iroi},1),1]);
-        p_FDR = nan(size(Tr{iexp,iroi},1),1);p_FDR(2) = P_FDR(iroi);
-        H_FDR = nan(size(Tr{iexp,iroi},1),1);H_FDR(2) = H(iroi);
+        p_FDR = nan(size(Tr{iexp,iroi},1),1);p_FDR(1) = P_INT_FDR(iroi);p_FDR(2) = P_SLOPE_FDR(iroi);
+        H_FDR = nan(size(Tr{iexp,iroi},1),1);H_FDR(1) = H_INT(iroi); H_FDR(2) = H_SLOPE(iroi);
         clear Tre
         Tre = [table(Experiment),table(ROI),Tr{iexp,iroi}(:,1:6),table(p_FDR),table(H_FDR),Tr{iexp,iroi}(:,7:end)];
         Tre.Properties.VariableNames{3} = 'FixedEffectName';

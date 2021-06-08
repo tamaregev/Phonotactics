@@ -135,13 +135,16 @@ avgfROIs = true;
 hf=figure;set(hf,'Position',[100 100 800 500])
 [h,hE,hL] = plotmROI_phono_allexp(Tb,effects,whichROIs,ROIstring,'confidence',avgfROIs);
 %% plot combination
+load([results_dir 'Tb'])
+
 tag='comb';
 effects = {{'N langloc'},{'N aud'},{'ENGNW'},{'W','W1','W2','W3','W4'},{'high','low'}};
 ROIstring = {'IFGorb','IFG','MFG','AntTemp','PostTemp','AngG','IFGorb-R','IFG-R','MFG-R','AntTemp-R','PostTemp-R','AngG-R'};
+rois = 7:11;
 
 hf=figure;set(hf,'Position',[100 100 800 800])
 subplot(4,6,[1:6])
-whichROIs=1:6;
+whichROIs=rois;
 avgfROIs = true;
 [h,hE,hL] = plotmROI_phono_allexp(Tb,effects,whichROIs,ROIstring,'stderr',avgfROIs);
 set(hL,'fontsize',16)
@@ -151,13 +154,14 @@ ylabel('% BOLD signal change','fontsize',16)
         
 avgfROIs = false;
 spi = {13:14,15:16,17:18,20:21,22:23};
-for whichROIs=1:5
-    subplot(4,6,spi{whichROIs})
+for ir=1:length(rois)
+    whichROI=rois(ir);
+    subplot(4,6,spi{ir})
     %[h,hE,hL] = plotmROI_phono_allexp(Tb,effects,whichROIs,ROIstring,'confidence');
-    [h,hE,hL] = plotmROI_phono_allexp(Tb,effects,whichROIs,ROIstring,'stderr');
+    [h,hE,hL] = plotmROI_phono_allexp(Tb,effects,whichROI,ROIstring,'stderr');
     legend off
     ylim([-2 3])
-    if whichROIs~=6
+    if whichROI~=6
         set(gca,'XTickLabels',[],'yLabel',[],'YTickLabels',[],'fontsize',16)
     else
         set(gca,'XTickLabels',[],'yLabel',[],'fontsize',16)

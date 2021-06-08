@@ -5,6 +5,8 @@ figures_dir = [root_dir 'figures/'];
 expNames = {'langlocSN','SWJNaud','Biling','ParamNew','Nhood'};
 expNs = {'Exp1a','Exp1b','Exp1c','Exp2','Exp3'};
 addpath('/Users/tamaregev/Dropbox/MATLAB/lab/myFunctions/mine')
+addpath('/Users/tamaregev/Dropbox/MATLAB/functions/myFunctions')
+
 %% Read and prep data
 iexp=3;%Biling
 expName = expNames{iexp};
